@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maxma Mini Farm 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #fcf4f4;
+            --card-bg: #ffffff;
+            --primary: #a8d5e2;
+            --secondary: #f9a8d4;
+            --text-dark: #4b5563;
+            --text-light: #9ca3af;
+            --danger: #fda4af;
+            --success: #bbf7d0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            padding: 20px 15px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            margin-bottom: 20px;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        input[type="text"], input[type="number"], select, input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            font-family: 'Prompt', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus { border-color: var(--primary); }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            font-weight: 400;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background-color: var(--primary);
+            color: white;
+            font-family: 'Prompt', sans-serif;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover { filter: brightness(0.95); }
+        button.btn-cancel { background-color: #e5e7eb; color: var(--text-dark); margin-top: 10px; display: none; }
+
+        .record-item {
+            border-bottom: 1px solid #f3f4f6;
+            padding: 15px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .record-item:last-child { border-bottom: none; }
+        
+        .record-details h4 { margin-bottom: 4px; font-weight: 500; }
+        .record-details p { font-size: 12px; color: var(--text-light); margin-bottom: 2px; }
+        .record-amount { font-weight: 600; font-size: 16px; }
+        .amount-in { color: #10b981; }
+        .amount-out { color: #ef4444; }
+
+        .action-btns { display: flex; gap: 8px; margin-top: 8px; }
+        .btn-small { padding: 6px 12px; font-size: 12px; width: auto; border-radius: 6px; }
+        .btn-edit { background-color: var(--primary); }
+        .btn-delete { background-color: var(--danger); }
+
+        #loading { text-align: center; display: none; margin: 10px 0; font-size: 14px; color: var(--text-light); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🌸 Maxma Mini Farm 2026</h2>
+    
+    <div class="card">
+        <form id="moneyForm">
+            <input type="hidden" id="recordId">
+            
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input type="radio" name="type" value="รายรับ" checked> รายรับ
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="type" value="รายจ่าย"> รายจ่าย
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label>หมวดหมู่</label>
+                <select id="category" required>
+                    <option value="">-- เลือกหมวดหมู่ --</option>
+                    <option value="ขายไข่ไก่">ขายไข่ไก่</option>
+                    <option value="ขายผักสลัด">ขายผักสลัด</option>
+                    <option value="ค่าอุปกรณ์">ค่าอุปกรณ์</option>
+                    <option value="ค่าเมล็ดพันธุ์ผัก">ค่าเมล็ดพันธุ์ผัก</option>
+                    <option value="ค่าอาหารไก่">ค่าอาหารไก่</option>
+                    <option value="ค่าวิตามิน">ค่าวิตามิน</option>
+                    <option value="อื่นๆ">อื่นๆ</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>รายการ</label>
+                <input type="text" id="description" placeholder="เช่น ขายไข่ไก่แผง 30 ฟอง" required>
+            </div>
+
+            <div class="form-group">
+                <label>จำนวนเงิน (บาท)</label>
+                <input type="number" id="amount" placeholder="0.00" required>
+            </div>
+
+            <div class="form-group">
+                <label>แนบรูปภาพ/ใบเสร็จ (jpg, png)</label>
+                <input type="file" id="fileUpload" accept=".jpg, .jpeg, .png">
+                <small style="color:var(--text-light); font-size:12px;">* หากแก้ไขข้อมูล ไม่ต้องอัปโหลดใหม่หากใช้รูปเดิม</small>
+            </div>
+
+            <button type="submit" id="submitBtn">บันทึกข้อมูล</button>
+            <button type="button" id="cancelBtn" class="btn-cancel" onclick="resetForm()">ยกเลิกการแก้ไข</button>
+            <div id="loading">กำลังดำเนินการ... รอสักครู่นะครับ ⏳</div>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3 style="font-size: 16px; margin-bottom: 10px;">รายการล่าสุด</h3>
+        <div id="recordList">
+            </div>
+    </div>
+</div>
+
+<script>
+    // ⚠️ นำ URL ของ Web App ที่ได้จากการ Deploy มาใส่ที่นี่
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyD3K6LNja2DJ-Osq-ENxT-QByDDUhPuwuqd3-mVZcukun5Bg3UyQ1ZePhKES6yMorI/exec';
+    
+    let currentData = [];
+
+    document.addEventListener("DOMContentLoaded", loadData);
+
+    async function loadData() {
+        document.getElementById('recordList').innerHTML = '<p style="text-align:center; font-size:14px; color:gray;">กำลังโหลดข้อมูล...</p>';
+        try {
+            let res = await fetch(SCRIPT_URL + '?action=read');
+            let json = await res.json();
+            if(json.status === 'success') {
+                currentData = json.data;
+                renderList();
+            }
+        } catch (error) {
+            document.getElementById('recordList').innerHTML = '<p style="color:red; text-align:center;">โหลดข้อมูลไม่สำเร็จ</p>';
+        }
+    }
+
+    function renderList() {
+        const listContainer = document.getElementById('recordList');
+        listContainer.innerHTML = '';
+        if(currentData.length === 0) {
+            listContainer.innerHTML = '<p style="text-align:center; font-size:14px; color:gray;">ยังไม่มีรายการ</p>';
+            return;
+        }
+
+        currentData.forEach(item => {
+            const isIncome = item.type === 'รายรับ';
+            const amountClass = isIncome ? 'amount-in' : 'amount-out';
+            const sign = isIncome ? '+' : '-';
+            const imgLink = item.fileUrl ? `<a href="${item.fileUrl}" target="_blank" style="font-size:12px; color:#a8d5e2;">ดูรูปภาพ</a>` : '';
+
+            const html = `
+                <div class="record-item">
+                    <div class="record-details">
+                        <h4>${item.description}</h4>
+                        <p>${item.category} | ${item.timestamp}</p>
+                        ${imgLink}
+                        <div class="action-btns">
+                            <button class="btn-small btn-edit" onclick="editRecord('${item.id}')">แก้ไข</button>
+                            <button class="btn-small btn-delete" onclick="deleteRecord('${item.id}')">ลบ</button>
+                        </div>
+                    </div>
+                    <div class="record-amount ${amountClass}">
+                        ${sign}${item.amount} ฿
+                    </div>
+                </div>
+            `;
+            listContainer.innerHTML += html;
+        });
+    }
+
+    document.getElementById('moneyForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        toggleLoading(true);
+
+        const id = document.getElementById('recordId').value;
+        const type = document.querySelector('input[name="type"]:checked').value;
+        const category = document.getElementById('category').value;
+        const description = document.getElementById('description').value;
+        const amount = document.getElementById('amount').value;
+        const fileInput = document.getElementById('fileUpload');
+        
+        let payload = {
+            action: id ? 'update' : 'insert',
+            id: id,
+            type: type,
+            category: category,
+            description: description,
+            amount: amount,
+            fileData: '',
+            fileName: '',
+            fileMimeType: ''
+        };
+
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = async function() {
+                payload.fileData = reader.result;
+                payload.fileName = file.name;
+                payload.fileMimeType = file.type;
+                await sendData(payload);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            await sendData(payload);
+        }
+    });
+
+    async function sendData(payload) {
+        try {
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // ป้องกันปัญหา CORS
+                body: JSON.stringify(payload)
+            });
+            resetForm();
+            await loadData();
+        } catch (error) {
+            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+        }
+        toggleLoading(false);
+    }
+
+    function editRecord(id) {
+        const item = currentData.find(d => d.id === id);
+        if(!item) return;
+
+        document.getElementById('recordId').value = item.id;
+        document.querySelector(`input[name="type"][value="${item.type}"]`).checked = true;
+        document.getElementById('category').value = item.category;
+        document.getElementById('description').value = item.description;
+        document.getElementById('amount').value = item.amount;
+        
+        document.getElementById('submitBtn').innerText = 'อัปเดตข้อมูล';
+        document.getElementById('submitBtn').style.backgroundColor = '#f9a8d4'; // เปลี่ยนสีปุ่มแจ้งเตือนการแก้ไข
+        document.getElementById('cancelBtn').style.display = 'block';
+        window.scrollTo(0, 0);
+    }
+
+    async function deleteRecord(id) {
+        if(confirm('คุณต้องการลบรายการนี้ใช่หรือไม่? (ไม่สามารถกู้คืนได้)')) {
+            toggleLoading(true);
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'delete', id: id })
+                });
+                await loadData();
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการลบข้อมูล');
+            }
+            toggleLoading(false);
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('moneyForm').reset();
+        document.getElementById('recordId').value = '';
+        document.getElementById('submitBtn').innerText = 'บันทึกข้อมูล';
+        document.getElementById('submitBtn').style.backgroundColor = 'var(--primary)';
+        document.getElementById('cancelBtn').style.display = 'none';
+    }
+
+    function toggleLoading(isLoading) {
+        document.getElementById('loading').style.display = isLoading ? 'block' : 'none';
+        document.getElementById('submitBtn').disabled = isLoading;
+    }
+</script>
+
+</body>
+</html>
