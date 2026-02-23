@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Maxma Mini Farm 2026</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg-color: #fcf4f4;
@@ -14,7 +15,15 @@
             --text-dark: #4b5563;
             --text-light: #9ca3af;
             --danger: #fda4af;
-            --success: #bbf7d0;
+            --success: #86efac;
+            --success-dark: #34d399;
+            --danger-dark: #fb7185;
+            --balance-bg: #e0f2fe;
+            --balance-text: #0284c7;
+            --income-bg: #d1fae5;
+            --income-text: #059669;
+            --expense-bg: #ffe4e6;
+            --expense-text: #e11d48;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,7 +36,7 @@
         }
 
         .container {
-            max-width: 500px;
+            max-width: 600px;
             margin: 0 auto;
         }
 
@@ -45,6 +54,44 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.03);
             margin-bottom: 20px;
         }
+
+        /* --- กล่องแสดงสรุปยอด --- */
+        .summary-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .summary-box {
+            flex: 1;
+            padding: 15px 10px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .summary-box span {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-dark);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .summary-box h3 {
+            font-size: 18px;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .bg-income { background-color: var(--income-bg); }
+        .text-income { color: var(--income-text); }
+        
+        .bg-expense { background-color: var(--expense-bg); }
+        .text-expense { color: var(--expense-text); }
+        
+        .bg-balance { background-color: var(--balance-bg); }
+        .text-balance { color: var(--balance-text); }
+        /* ----------------------- */
 
         .form-group { margin-bottom: 15px; }
         
@@ -67,21 +114,39 @@
 
         input:focus, select:focus { border-color: var(--primary); }
 
-        .radio-group {
+        .type-toggle {
             display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        .btn-check {
+            position: absolute;
+            clip: rect(0,0,0,0);
+            pointer-events: none;
         }
 
-        .radio-label {
-            display: flex;
-            align-items: center;
-            gap: 5px;
+        .btn-toggle {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            font-family: 'Prompt', sans-serif;
+            font-size: 16px;
+            font-weight: 500;
             cursor: pointer;
-            font-weight: 400;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
         }
 
-        button {
+        .btn-outline-success { color: var(--success-dark); border-color: var(--success-dark); background-color: transparent; }
+        .btn-check:checked + .btn-outline-success { background-color: var(--success-dark); color: white; box-shadow: 0 4px 10px rgba(52, 211, 153, 0.3); }
+
+        .btn-outline-danger { color: var(--danger-dark); border-color: var(--danger-dark); background-color: transparent; }
+        .btn-check:checked + .btn-outline-danger { background-color: var(--danger-dark); color: white; box-shadow: 0 4px 10px rgba(251, 113, 133, 0.3); }
+
+        button.btn-submit {
             width: 100%;
             padding: 12px;
             border: none;
@@ -95,30 +160,40 @@
             transition: background-color 0.2s;
         }
 
-        button:hover { filter: brightness(0.95); }
-        button.btn-cancel { background-color: #e5e7eb; color: var(--text-dark); margin-top: 10px; display: none; }
+        button.btn-submit:hover { filter: brightness(0.95); }
+        button.btn-cancel { width: 100%; padding: 12px; border: none; border-radius: 10px; background-color: #e5e7eb; color: var(--text-dark); margin-top: 10px; display: none; font-family: 'Prompt', sans-serif; cursor: pointer; }
 
-        .record-item {
-            border-bottom: 1px solid #f3f4f6;
-            padding: 15px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .record-item:last-child { border-bottom: none; }
-        
-        .record-details h4 { margin-bottom: 4px; font-weight: 500; }
-        .record-details p { font-size: 12px; color: var(--text-light); margin-bottom: 2px; }
-        .record-amount { font-weight: 600; font-size: 16px; }
-        .amount-in { color: #10b981; }
-        .amount-out { color: #ef4444; }
+        .table-responsive { overflow-x: auto; border-radius: 8px; }
+        .styled-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .styled-table th, .styled-table td { padding: 10px 12px; border-bottom: 1px solid #f3f4f6; text-align: left; white-space: nowrap; }
+        .styled-table th { background-color: #f8fafc; color: var(--text-dark); font-weight: 500; }
+        .styled-table tbody tr:hover { background-color: #fef8f8; }
 
-        .action-btns { display: flex; gap: 8px; margin-top: 8px; }
-        .btn-small { padding: 6px 12px; font-size: 12px; width: auto; border-radius: 6px; }
+        .amount-in { color: var(--success-dark); font-weight: 600; }
+        .amount-out { color: var(--danger-dark); font-weight: 600; }
+
+        .action-btns { display: flex; gap: 5px; }
+        .btn-small { padding: 4px 8px; font-size: 12px; border-radius: 6px; border: none; color: white; cursor: pointer; }
         .btn-edit { background-color: var(--primary); }
         .btn-delete { background-color: var(--danger); }
 
         #loading { text-align: center; display: none; margin: 10px 0; font-size: 14px; color: var(--text-light); }
+        
+        .chart-container { position: relative; height: 250px; width: 100%; }
+
+        .search-box { position: relative; margin-bottom: 15px; }
+        .search-box input { padding-left: 35px; background-color: #f8fafc; }
+        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light); font-size: 14px; }
+        
+        /* สไตล์สำหรับเครดิตท้ายเว็บ */
+        .footer-credit {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-light);
+            margin-top: 10px;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
     </style>
 </head>
 <body>
@@ -127,29 +202,43 @@
     <h2>🌸 Maxma Mini Farm 2026</h2>
     
     <div class="card">
+        <div class="summary-container">
+            <div class="summary-box bg-income">
+                <span>รายรับรวม</span>
+                <h3 id="totalIncome" class="text-income">0.00</h3>
+            </div>
+            <div class="summary-box bg-expense">
+                <span>รายจ่ายรวม</span>
+                <h3 id="totalExpense" class="text-expense">0.00</h3>
+            </div>
+            <div class="summary-box bg-balance">
+                <span>คงเหลือ</span>
+                <h3 id="totalBalance" class="text-balance">0.00</h3>
+            </div>
+        </div>
+
         <form id="moneyForm">
             <input type="hidden" id="recordId">
             
-            <div class="radio-group">
-                <label class="radio-label">
-                    <input type="radio" name="type" value="รายรับ" checked> รายรับ
-                </label>
-                <label class="radio-label">
-                    <input type="radio" name="type" value="รายจ่าย"> รายจ่าย
-                </label>
+            <div class="type-toggle">
+                <input type="radio" class="btn-check" name="type" id="type-income" value="รายรับ" checked>
+                <label class="btn-toggle btn-outline-success" for="type-income">รายรับ</label>
+
+                <input type="radio" class="btn-check" name="type" id="type-expense" value="รายจ่าย">
+                <label class="btn-toggle btn-outline-danger" for="type-expense">รายจ่าย</label>
             </div>
 
             <div class="form-group">
                 <label>หมวดหมู่</label>
                 <select id="category" required>
                     <option value="">-- เลือกหมวดหมู่ --</option>
-                    <option value="ขายไข่ไก่">ขายไข่ไก่</option>
-                    <option value="ขายผักสลัด">ขายผักสลัด</option>
-                    <option value="ค่าอุปกรณ์">ค่าอุปกรณ์</option>
-                    <option value="ค่าเมล็ดพันธุ์ผัก">ค่าเมล็ดพันธุ์ผัก</option>
-                    <option value="ค่าอาหารไก่">ค่าอาหารไก่</option>
-                    <option value="ค่าวิตามิน">ค่าวิตามิน</option>
-                    <option value="อื่นๆ">อื่นๆ</option>
+                    <option value="ขายไข่ไก่">🥚 ขายไข่ไก่</option>
+                    <option value="ขายผักสลัด">🥬 ขายผักสลัด</option>
+                    <option value="ค่าอุปกรณ์">🛠️ ค่าอุปกรณ์</option>
+                    <option value="ค่าเมล็ดพันธุ์ผัก">🌱 ค่าเมล็ดพันธุ์ผัก</option>
+                    <option value="ค่าอาหารไก่">🌾 ค่าอาหารไก่</option>
+                    <option value="ค่าวิตามิน">💊 ค่าวิตามิน</option>
+                    <option value="อื่นๆ">📦 อื่นๆ</option>
                 </select>
             </div>
 
@@ -169,26 +258,59 @@
                 <small style="color:var(--text-light); font-size:12px;">* หากแก้ไขข้อมูล ไม่ต้องอัปโหลดใหม่หากใช้รูปเดิม</small>
             </div>
 
-            <button type="submit" id="submitBtn">บันทึกข้อมูล</button>
+            <button type="submit" id="submitBtn" class="btn-submit">บันทึกข้อมูล</button>
             <button type="button" id="cancelBtn" class="btn-cancel" onclick="resetForm()">ยกเลิกการแก้ไข</button>
             <div id="loading">กำลังดำเนินการ... รอสักครู่นะครับ ⏳</div>
         </form>
     </div>
 
     <div class="card">
-        <h3 style="font-size: 16px; margin-bottom: 10px;">รายการล่าสุด</h3>
+        <h3 style="font-size: 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+            รายการล่าสุด
+            <span style="font-size: 12px; font-weight: normal; color: var(--text-light);">เลื่อนซ้าย-ขวาได้</span>
+        </h3>
+        
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="ค้นหารายการ, หมวดหมู่, วันที่...">
+        </div>
+
         <div id="recordList">
             </div>
+    </div>
+
+    <div class="card">
+        <h3 style="font-size: 16px; margin-bottom: 15px; text-align: center;">📈 กราฟแนวโน้มรายรับ-รายจ่าย รายเดือน</h3>
+        <div class="chart-container">
+            <canvas id="monthlyChart"></canvas>
+        </div>
+    </div>
+
+    <div class="footer-credit">
+        design by kroomaxma
     </div>
 </div>
 
 <script>
-    // ⚠️ นำ URL ของ Web App ที่ได้จากการ Deploy มาใส่ที่นี่
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyD3K6LNja2DJ-Osq-ENxT-QByDDUhPuwuqd3-mVZcukun5Bg3UyQ1ZePhKES6yMorI/exec';
     
     let currentData = [];
+    let myChart = null;
+
+    const categoryIcons = {
+        "ขายไข่ไก่": "🥚",
+        "ขายผักสลัด": "🥬",
+        "ค่าอุปกรณ์": "🛠️",
+        "ค่าเมล็ดพันธุ์ผัก": "🌱",
+        "ค่าอาหารไก่": "🌾",
+        "ค่าวิตามิน": "💊",
+        "อื่นๆ": "📦"
+    };
+
+    const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 
     document.addEventListener("DOMContentLoaded", loadData);
+    document.getElementById('searchInput').addEventListener('input', renderList);
 
     async function loadData() {
         document.getElementById('recordList').innerHTML = '<p style="text-align:center; font-size:14px; color:gray;">กำลังโหลดข้อมูล...</p>';
@@ -197,44 +319,206 @@
             let json = await res.json();
             if(json.status === 'success') {
                 currentData = json.data;
+                updateSummary();
                 renderList();
+                renderChart();
             }
         } catch (error) {
             document.getElementById('recordList').innerHTML = '<p style="color:red; text-align:center;">โหลดข้อมูลไม่สำเร็จ</p>';
         }
     }
 
+    function updateSummary() {
+        let tIncome = 0;
+        let tExpense = 0;
+
+        currentData.forEach(item => {
+            let amt = parseFloat(item.amount) || 0;
+            if(item.type === 'รายรับ') {
+                tIncome += amt;
+            } else {
+                tExpense += amt;
+            }
+        });
+
+        let tBalance = tIncome - tExpense;
+
+        document.getElementById('totalIncome').innerText = tIncome.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('totalExpense').innerText = tExpense.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('totalBalance').innerText = tBalance.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
     function renderList() {
         const listContainer = document.getElementById('recordList');
-        listContainer.innerHTML = '';
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase(); 
+        
         if(currentData.length === 0) {
             listContainer.innerHTML = '<p style="text-align:center; font-size:14px; color:gray;">ยังไม่มีรายการ</p>';
             return;
         }
 
-        currentData.forEach(item => {
+        let filteredData = currentData;
+        if (searchTerm) {
+            filteredData = currentData.filter(item => {
+                const textToSearch = `${item.description} ${item.category} ${item.timestamp} ${item.amount}`.toLowerCase();
+                return textToSearch.includes(searchTerm);
+            });
+        }
+
+        if(filteredData.length === 0) {
+            listContainer.innerHTML = '<p style="text-align:center; font-size:14px; color:gray;">ไม่พบข้อมูลที่ค้นหา</p>';
+            return;
+        }
+
+        const top10Data = filteredData.slice(0, 10);
+
+        let tableHTML = `
+            <div class="table-responsive">
+                <table class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>วันที่</th>
+                            <th>หมวดหมู่</th>
+                            <th>รายการ</th>
+                            <th>ยอดเงิน</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        top10Data.forEach(item => {
             const isIncome = item.type === 'รายรับ';
             const amountClass = isIncome ? 'amount-in' : 'amount-out';
             const sign = isIncome ? '+' : '-';
-            const imgLink = item.fileUrl ? `<a href="${item.fileUrl}" target="_blank" style="font-size:12px; color:#a8d5e2;">ดูรูปภาพ</a>` : '';
+            
+            let shortDate = item.timestamp;
+            if (shortDate.includes('T')) {
+                let datePart = shortDate.split('T')[0].split('-'); 
+                shortDate = `${datePart[2]}/${datePart[1]}/${datePart[0]}`; 
+            } else {
+                shortDate = shortDate.split(' ')[0]; 
+            }
 
-            const html = `
-                <div class="record-item">
-                    <div class="record-details">
-                        <h4>${item.description}</h4>
-                        <p>${item.category} | ${item.timestamp}</p>
-                        ${imgLink}
+            const icon = categoryIcons[item.category] || "📌";
+            const categoryWithIcon = `${icon} ${item.category}`;
+            const fileLink = item.fileUrl ? `<a href="${item.fileUrl}" target="_blank" style="margin-left:5px; text-decoration:none;">🖼️</a>` : '';
+
+            tableHTML += `
+                <tr>
+                    <td>${shortDate}</td>
+                    <td>${categoryWithIcon}</td>
+                    <td>${item.description} ${fileLink}</td>
+                    <td class="${amountClass}">${sign}${Number(item.amount).toLocaleString('th-TH')}</td>
+                    <td>
                         <div class="action-btns">
-                            <button class="btn-small btn-edit" onclick="editRecord('${item.id}')">แก้ไข</button>
-                            <button class="btn-small btn-delete" onclick="deleteRecord('${item.id}')">ลบ</button>
+                            <button type="button" class="btn-small btn-edit" onclick="editRecord('${item.id}')">แก้ไข</button>
+                            <button type="button" class="btn-small btn-delete" onclick="deleteRecord('${item.id}')">ลบ</button>
                         </div>
-                    </div>
-                    <div class="record-amount ${amountClass}">
-                        ${sign}${item.amount} ฿
-                    </div>
-                </div>
+                    </td>
+                </tr>
             `;
-            listContainer.innerHTML += html;
+        });
+
+        tableHTML += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        listContainer.innerHTML = tableHTML;
+    }
+
+    // --- ส่วนของการวาดกราฟเส้น ---
+    function renderChart() {
+        const ctx = document.getElementById('monthlyChart').getContext('2d');
+        
+        if (myChart) {
+            myChart.destroy();
+        }
+
+        if (currentData.length === 0) return;
+
+        let monthlyStats = {};
+
+        currentData.forEach(item => {
+            let monthKey = "";
+            let shortDate = item.timestamp;
+            
+            if (shortDate.includes('T')) {
+                let datePart = shortDate.split('T')[0].split('-'); 
+                monthKey = `${datePart[0]}-${datePart[1]}`; 
+            } else {
+                let datePart = shortDate.split(' ')[0].split('/'); 
+                monthKey = `${datePart[2]}-${datePart[1]}`; 
+            }
+
+            if (!monthlyStats[monthKey]) {
+                monthlyStats[monthKey] = { income: 0, expense: 0 };
+            }
+
+            let amount = parseFloat(item.amount) || 0;
+            if (item.type === 'รายรับ') {
+                monthlyStats[monthKey].income += amount;
+            } else {
+                monthlyStats[monthKey].expense += amount;
+            }
+        });
+
+        let sortedKeys = Object.keys(monthlyStats).sort();
+        let labels = [];
+        let incomeData = [];
+        let expenseData = [];
+
+        sortedKeys.forEach(key => {
+            let parts = key.split('-');
+            let monthIndex = parseInt(parts[1], 10) - 1; 
+            
+            labels.push(`${thaiMonths[monthIndex]} ${parts[0]}`); 
+            incomeData.push(monthlyStats[key].income);
+            expenseData.push(monthlyStats[key].expense);
+        });
+
+        // สร้างกราฟแบบเส้น (Line Chart)
+        myChart = new Chart(ctx, {
+            type: 'line', // เปลี่ยนเป็น line
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'รายรับ (บาท)',
+                        data: incomeData,
+                        borderColor: '#34d399', // สีเส้น
+                        backgroundColor: 'rgba(52, 211, 153, 0.2)', // สีพื้นหลังใต้เส้น
+                        pointBackgroundColor: '#34d399', // สีจุด
+                        borderWidth: 2,
+                        tension: 0.4, // ความโค้งของเส้น (0 = เหลี่ยม, 1 = โค้งสุด)
+                        fill: true // เติมสีใต้เส้น
+                    },
+                    {
+                        label: 'รายจ่าย (บาท)',
+                        data: expenseData,
+                        borderColor: '#fb7185',
+                        backgroundColor: 'rgba(251, 113, 133, 0.2)',
+                        pointBackgroundColor: '#fb7185',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false, 
+                plugins: {
+                    legend: { labels: { font: { family: "'Prompt', sans-serif" } } },
+                    tooltip: { titleFont: { family: "'Prompt', sans-serif" }, bodyFont: { family: "'Prompt', sans-serif" } }
+                },
+                scales: {
+                    x: { ticks: { font: { family: "'Prompt', sans-serif" } }, grid: { display: false } },
+                    y: { ticks: { font: { family: "'Prompt', sans-serif" } }, beginAtZero: true }
+                }
+            }
         });
     }
 
@@ -280,7 +564,7 @@
         try {
             await fetch(SCRIPT_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // ป้องกันปัญหา CORS
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(payload)
             });
             resetForm();
@@ -296,13 +580,19 @@
         if(!item) return;
 
         document.getElementById('recordId').value = item.id;
-        document.querySelector(`input[name="type"][value="${item.type}"]`).checked = true;
+        
+        if (item.type === 'รายรับ') {
+            document.getElementById('type-income').checked = true;
+        } else {
+            document.getElementById('type-expense').checked = true;
+        }
+
         document.getElementById('category').value = item.category;
         document.getElementById('description').value = item.description;
         document.getElementById('amount').value = item.amount;
         
         document.getElementById('submitBtn').innerText = 'อัปเดตข้อมูล';
-        document.getElementById('submitBtn').style.backgroundColor = '#f9a8d4'; // เปลี่ยนสีปุ่มแจ้งเตือนการแก้ไข
+        document.getElementById('submitBtn').style.backgroundColor = '#f9a8d4'; 
         document.getElementById('cancelBtn').style.display = 'block';
         window.scrollTo(0, 0);
     }
@@ -327,6 +617,7 @@
     function resetForm() {
         document.getElementById('moneyForm').reset();
         document.getElementById('recordId').value = '';
+        document.getElementById('type-income').checked = true; 
         document.getElementById('submitBtn').innerText = 'บันทึกข้อมูล';
         document.getElementById('submitBtn').style.backgroundColor = 'var(--primary)';
         document.getElementById('cancelBtn').style.display = 'none';
